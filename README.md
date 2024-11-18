@@ -16,7 +16,9 @@ Details about this implementation can be found in the [`python-can-tester`](./py
 - **`python-can-tester/`**  
   Contains the implementation details and examples for testing DoCAN communication scenarios using `python-can`. Refer to the [README](./pythoncantester/README.md) for a detailed guide.
 
-- **`will be added more`**  
+- **`isotp-can-tester-gui`**
+  Refer to the [README](./isotp-can-tester-gui/README.md) for a detailed guide.
+  
 ---
 
 Feel free to contribute by adding new scenarios or improving the existing implementations!
