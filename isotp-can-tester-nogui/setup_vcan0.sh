@@ -1,4 +1,4 @@
-2#!/bin/bash
+#!/bin/bash
 set -euo pipefail
 
 sudo modprobe can vcan
