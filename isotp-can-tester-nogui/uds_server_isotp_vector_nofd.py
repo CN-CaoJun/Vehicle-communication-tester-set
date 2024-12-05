@@ -11,7 +11,7 @@ import json
 
 can.rc['interface'] = 'vector'
 can.rc['bustype'] = 'vector'
-can.rc['channel'] = '0'
+can.rc['channel'] = '1'
 can.rc['app_name'] = 'Python_ISOTP_Server'
  
 can.rc['fd'] = False  
@@ -21,7 +21,6 @@ can.rc['bitrate'] = 500000
 can.rc['sjw_abr'] = 16
 can.rc['tseg1_abr'] = 63
 can.rc['tseg2_abr'] = 16
-can.rc['sam'] = 1
 
 # can.rc['sam_abr'] = 1
 # can.rc['sjw_dbr'] = 6
@@ -32,7 +31,7 @@ can.rc['sam'] = 1
 try:
     bus = Bus()
     notifier = can.Notifier(bus, [])
-    print("Vector bus initialized successfully. This for ***Server***")
+    print("Vector bus initialized successfully.\r\n")
 except Exception as e:
     print(f"Failed to initialize PCAN bus: {e}")
     exit(1)
@@ -54,10 +53,27 @@ isotp_params = {
     'listen_mode': False,
     'blocking_send': False    
 }
-# logging.basicConfig(level=logging.DEBUG)
-#A-CAN -> VCU -> 
-tp_addr = isotp.Address(isotp.AddressingMode.Normal_11bits, txid=0x739, rxid=0x731)
-# tp_addr = isotp.Address(isotp.AddressingMode.Normal_11bits, txid=0x749, rxid=0x741)
+node_id_map = {
+    'SMLS': {'RXID': 0x731, 'TXID': 0x739},
+    'HCML': {'RXID': 0x740, 'TXID': 0x748},
+    'HCMR': {'RXID': 0x741, 'TXID': 0x749},
+    'RCM':  {'RXID': 0x742, 'TXID': 0x74A},
+}
+
+node_name = sys.argv[1]
+
+if node_name in node_id_map:
+    rx_id = node_id_map[node_name]['RXID']
+    tx_id = node_id_map[node_name]['TXID']
+    print("************************************************************")
+    print(f"ISOTP Server : {node_name} \r\nRXID: {rx_id:#04X}  \r\nTXID: {tx_id:#04X}")
+    print("************************************************************")
+    
+            
+else:
+    print(f"Note found: {node_name}")
+            
+tp_addr = isotp.Address(isotp.AddressingMode.Normal_11bits, txid=tx_id, rxid=rx_id)
 
 isotp_layer = isotp.NotifierBasedCanStack(
     bus = bus,
@@ -72,21 +88,6 @@ cfg = Config()
 
 with open('Node_Description.json', 'r') as file:
     data = json.load(file)
-
-target_node_id = "SMLS"  
-
-for node in data['CAN_Nodes']:
-    if node['node_id'] == target_node_id:
-        phyreq_address = node['phyreq_address']
-        resp_address = node['resp_address']
-        print(f"Node ID: {target_node_id}")
-        print(f"phyreq_address: {phyreq_address}")
-        print(f"resp_address: {resp_address}")
-        break
-else:
-    print(f"Node ID '{target_node_id}' not found in the JSON file.")
-
-
 cfg.load_case("test_case.json")
 
 try:
@@ -98,10 +99,19 @@ try:
 
             payload_res = cfg.find_case(payload.hex().upper())
             if  payload_res == None:
-                payload = bytearray([x & 0xFF for x in range(4000)])
                 
+                if len(payload) < 2:
+                    print("Received payload is too short to extract response length.")
+                    len_res = 2
+                else:
+                    len_res = (payload[0] << 8) | payload[1]
+                    print(f"Parsed response length: {len_res}")
+                    if len_res > 4095:
+                        len_res = 4095
+                    
+                payload = bytearray([x & 0xFF for x in range(len_res)])
             else:
-                print("Send Random Data from json file:")
+                print("Send specific Data from json file:")
                 payload = bytes.fromhex(payload_res)
 
             isotp_layer.send(payload)
