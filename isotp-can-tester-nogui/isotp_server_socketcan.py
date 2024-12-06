@@ -41,7 +41,7 @@ isotp_params = {
     'blocking_send': False    
 }
 
-# logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 node_id_map = {
     'SMLS': {'RXID': 0x731, 'TXID': 0x739},
@@ -79,7 +79,7 @@ cfg = Config()
 
 with open('Node_Description.json', 'r') as file:
     data = json.load(file)
-cfg.load_case("test_case.json")
+cfg.load_case("Diag_Description.json")
 
 try:
     while True:
