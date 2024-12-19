@@ -22,7 +22,6 @@ can.rc['tseg1_abr'] = 63
 can.rc['tseg2_abr'] = 16
 
 can.rc['sam_abr'] = 1
-
 can.rc['sjw_dbr'] = 6
 can.rc['tseg1_dbr'] = 13
 can.rc['tseg2_dbr'] = 6

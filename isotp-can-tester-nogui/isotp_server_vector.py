@@ -23,7 +23,6 @@ can.rc['tseg1_abr'] = 63
 can.rc['tseg2_abr'] = 16
 
 can.rc['sam_abr'] = 1
-
 can.rc['sjw_dbr'] = 6
 can.rc['tseg1_dbr'] = 13
 can.rc['tseg2_dbr'] = 6
@@ -39,7 +38,7 @@ except Exception as e:
 
 isotp_params = {
     'stmin': 10,
-    'blocksize': 4,
+    'blocksize': 8,
     'override_receiver_stmin': None,
     'wftmax': 4,
     'tx_data_length': 64,
