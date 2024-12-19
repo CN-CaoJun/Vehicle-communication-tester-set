@@ -12,12 +12,8 @@ import json
 can.rc['interface'] = 'vector'
 can.rc['bustype'] = 'vector'
 can.rc['channel'] = '0'
-can.rc['app_name'] = 'Python_ISOTP_Server'
+can.rc['app_name'] = 'Python_ISOTP_Client'
  
-can.rc['fd'] = True  
-can.rc['bitrate'] = 500000
-can.rc['data_bitrate'] = 2000000
-
 can.rc['fd'] = True  
 can.rc['bitrate'] = 500000
 can.rc['data_bitrate'] = 2000000
@@ -53,7 +49,7 @@ isotp_params = {
     'rx_consecutive_frame_timeout': 100,
     'can_fd': True,
     'max_frame_size': 4095,
-    'bitrate_switch': True,
+    'bitrate_switch': False,
     'rate_limit_enable': False,
     'listen_mode': False,
     'blocking_send': False    

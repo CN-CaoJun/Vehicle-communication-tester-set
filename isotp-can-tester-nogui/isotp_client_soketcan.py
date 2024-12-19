@@ -23,7 +23,7 @@ except Exception as e:
     
 isotp_params = {
     'stmin': 8,
-    'blocksize': 2,
+    'blocksize': 4,
     'override_receiver_stmin': None,
     'rx_flowcontrol_timeout': 1000,
     'rx_consecutive_frame_timeout': 1000,
