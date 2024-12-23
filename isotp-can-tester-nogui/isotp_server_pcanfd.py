@@ -9,28 +9,26 @@ import sys
 import binascii
 import json
 
-can.rc['interface'] = 'vector'
-can.rc['bustype'] = 'vector'
-can.rc['channel'] = '1'
-can.rc['app_name'] = 'Python_ISOTP_Server'
+can.rc['channel'] = 'PCAN_USBBUS1'
+can.rc['bustype'] = 'pcan'
  
 can.rc['fd'] = True  
-can.rc['bitrate'] = 500000
-can.rc['data_bitrate'] = 2000000
+can.rc['bitrate'] = 500000  #Bitrate of channel in bit/s. Default is 500 kbit/s. Ignored if using CanFD.
 
-can.rc['tseg1_abr'] = 63
-can.rc['tseg2_abr'] = 16
-can.rc['sjw_abr'] = 16
-
-can.rc['sam_abr'] = 1
-can.rc['tseg1_dbr'] = 13
-can.rc['tseg2_dbr'] = 6
-can.rc['sjw_dbr'] = 6
-
+can.rc['f_clock_mhz'] = 40 
+can.rc['nom_brp'] = 1
+can.rc['nom_tseg1'] = 63
+can.rc['nom_tseg2'] = 16
+can.rc['nom_sjw'] = 16
+can.rc['data_brp'] = 1
+can.rc['data_tseg1'] = 13
+can.rc['data_tseg2'] = 6
+can.rc['data_sjw'] = 6
+ 
 try:
     bus = Bus()
     notifier = can.Notifier(bus, [])
-    print("Vector bus initialized successfully.\r\n")
+    print("PCAN-FD bus initialized successfully.")
 except Exception as e:
     print(f"Failed to initialize PCAN bus: {e}")
     exit(1)

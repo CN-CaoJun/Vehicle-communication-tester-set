@@ -36,7 +36,7 @@ except Exception as e:
     
 isotp_params = {
     'stmin': 10,
-    'blocksize': 8,
+    'blocksize': 0,
     'override_receiver_stmin': None,
     'wftmax': 4,
     'tx_data_length': 64,
@@ -64,6 +64,7 @@ node_id_map = {
     'OCDC': {'RXID': 0x7ED, 'TXID': 0x7E5},
     'TMM': {'RXID': 0x7EE, 'TXID': 0x7E6},
     'HCU': {'RXID': 0x7EF, 'TXID': 0x7E7},
+    'IBRS': {'RXID': 0x718, 'TXID': 0x710},
 }
 node_name = sys.argv[1]
 
