@@ -12,14 +12,17 @@ import json
 can.rc['channel'] = 'PCAN_USBBUS1'
 can.rc['bustype'] = 'pcan'
  
+# can.rc['fd'] = True  
 can.rc['fd'] = True  
 can.rc['bitrate'] = 500000  #Bitrate of channel in bit/s. Default is 500 kbit/s. Ignored if using CanFD.
 
+#500K - 80%
 can.rc['f_clock_mhz'] = 40 
 can.rc['nom_brp'] = 1
 can.rc['nom_tseg1'] = 63
 can.rc['nom_tseg2'] = 16
 can.rc['nom_sjw'] = 16
+#2000K - 70%
 can.rc['data_brp'] = 1
 can.rc['data_tseg1'] = 13
 can.rc['data_tseg2'] = 6
@@ -38,18 +41,20 @@ isotp_params = {
     'blocksize': 0,
     'override_receiver_stmin': None,
     'wftmax': 4,
-    'tx_data_length': 64,
+    'tx_data_length': 64 if can.rc['fd'] else 8,
     'tx_data_min_length':8,
     'tx_padding': 0x00,
     'rx_flowcontrol_timeout': 1000,
     'rx_consecutive_frame_timeout': 100,
-    'can_fd': True,
+    'can_fd': can.rc['fd'],
     'max_frame_size': 4095,
     'bitrate_switch': False,
     'rate_limit_enable': False,
     'listen_mode': False,
     'blocking_send': False    
 }
+
+print("ISOTP Parameters:", isotp_params)
 # logging.basicConfig(level=logging.DEBUG)
 node_id_map = {
     'SMLS': {'RXID': 0x731, 'TXID': 0x739},
