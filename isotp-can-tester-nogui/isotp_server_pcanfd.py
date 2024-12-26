@@ -11,8 +11,9 @@ import json
 
 can.rc['channel'] = 'PCAN_USBBUS1'
 can.rc['bustype'] = 'pcan'
- 
-# can.rc['fd'] = True  
+
+# can.rc['fd'] = True
+
 can.rc['fd'] = True  
 can.rc['bitrate'] = 500000  #Bitrate of channel in bit/s. Default is 500 kbit/s. Ignored if using CanFD.
 
