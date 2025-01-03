@@ -35,7 +35,7 @@ except Exception as e:
     exit(1)
     
 isotp_params = {
-    'stmin': 10,
+    'stmin': 1,
     'blocksize': 0,
     'override_receiver_stmin': None,
     'wftmax': 4,
