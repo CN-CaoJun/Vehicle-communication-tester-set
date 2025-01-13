@@ -11,7 +11,7 @@ import json
 
 can.rc['interface'] = 'vector'
 can.rc['bustype'] = 'vector'
-can.rc['channel'] = '1'
+can.rc['channel'] = '0'
 can.rc['app_name'] = 'Python_ISOTP_Server'
  
 can.rc['fd'] = True  
@@ -32,7 +32,7 @@ try:
     notifier = can.Notifier(bus, [])
     print("Vector bus initialized successfully.\r\n")
 except Exception as e:
-    print(f"Failed to initialize PCAN bus: {e}")
+    print(f"Failed to initialize Vector bus: {e}")
     exit(1)
 
 isotp_params = {
