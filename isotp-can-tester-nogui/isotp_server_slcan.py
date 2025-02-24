@@ -9,39 +9,22 @@ import sys
 import binascii
 import json
 
-can.rc['interface'] = 'vector'
-can.rc['bustype'] = 'vector'
-can.rc['channel'] = '0'
-can.rc['app_name'] = 'Python_ISOTP_Server'
- 
-can.rc['fd'] = True  
-can.rc['bitrate'] = 500000
-can.rc['data_bitrate'] = 2000000
-
-can.rc['tseg1_abr'] = 63
-can.rc['tseg2_abr'] = 16
-can.rc['sjw_abr'] = 16
-
-can.rc['sam_abr'] = 1
-can.rc['tseg1_dbr'] = 13
-can.rc['tseg2_dbr'] = 6
-can.rc['sjw_dbr'] = 6
-
 try:
-    bus = Bus()
+    bus = can.interface.Bus(channel='COM34', bustype='slcan', bitrate=500000)
     notifier = can.Notifier(bus, [])
-    print("Vector bus initialized successfully.\r\n")
+    print("SLCAN bus initialized successfully. This for ***Client***")
 except Exception as e:
-    print(f"Failed to initialize Vector bus: {e}")
+    print(f"Failed to initialize SLCAN bus: {e}")
     exit(1)
-
+    
 isotp_params = {
     'stmin': 1,
     'blocksize': 0,
     'override_receiver_stmin': None,
-    'wftmax': 4,
-    'tx_data_length': 64,
-    'tx_data_min_length':8,
+    'rx_flowcontrol_timeout': 1000,
+    'rx_consecutive_frame_timeout': 1000,
+    'wftmax': 0,
+    'tx_data_length': 8,
     'tx_padding': 0x00,
     'rx_flowcontrol_timeout': 1000,
     'rx_consecutive_frame_timeout': 100,
@@ -62,6 +45,9 @@ node_id_map = {
     'HCU': {'RXID': 0x7E7, 'TXID': 0x7EF},
     'IBRS': {'RXID': 0x710, 'TXID': 0x718},
     'VCU': {'RXID': 0x7E1, 'TXID': 0x7E9},
+    'HCML': {'RXID': 0x740, 'TXID': 0x748},
+    'HCMR': {'RXID': 0x741, 'TXID': 0x749},
+    'RCM': {'RXID': 0x742, 'TXID': 0x74A},
 }
 node_name = sys.argv[1]
 

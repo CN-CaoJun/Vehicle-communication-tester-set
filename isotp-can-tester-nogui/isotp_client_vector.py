@@ -65,6 +65,7 @@ node_id_map = {
     'TMM': {'RXID': 0x7EE, 'TXID': 0x7E6},
     'HCU': {'RXID': 0x7EF, 'TXID': 0x7E7},
     'IBRS': {'RXID': 0x718, 'TXID': 0x710},
+    'VCU': {'RXID': 0x7E9, 'TXID': 0x7E1},
 }
 node_name = sys.argv[1]
 
