@@ -80,20 +80,59 @@ def shell_control():
         phase_change_count=10,
         intervals=[20, 20]
     )
+    
+    controller_600_arm = CANFrameController(
+        bus=bus,
+        can_id=0x600,
+        initial_data={
+            0: [0x00]*8,
+            1: [0x00]*8
+        },
+        phase_change_count=10,
+        intervals=[1000, 1000]
+    )
+
+    controller_391_arm = CANFrameController(
+        bus=bus,
+        can_id=0x391,
+        initial_data={
+            0: [0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00],
+            1: [0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00]
+        },
+        phase_change_count=10,
+        intervals=[20, 20]
+    )
 
     while True:
-        cmd = input("Enter command (start/stop/exit): ").strip().lower()
-        if cmd == 'start':
+        cmd = input("Enter command (1=start/2=stop/3=exit): ").strip().lower()
+        if cmd == '1':
+            print("Started CAN NM transmission")
             controller_600.start()
             controller_391.start()
-            print("Started CAN transmission")
-        elif cmd == 'stop':
+        # elif cmd == '2':
+        #     print("Stopped CAN NM transmission")
+        #     controller_600.stop()
+        #     controller_391.stop()
+        #     controller_600_arm.stop()
+        #     controller_391_arm.stop()
+        elif cmd == '2':
             controller_600.stop()
             controller_391.stop()
-            print("Stopped CAN transmission")
-        elif cmd == 'exit':
+            print("Send ARM Msgs to enter polling mode")
+            controller_600_arm.start()
+            controller_391_arm.start()
+            def stop_arm_controllers():
+                controller_600_arm.stop()
+                controller_391_arm.stop()
+                # bus.shutdown()
+                print("Automatically stopped ARM messages after 5 seconds")
+            threading.Timer(5.0, stop_arm_controllers).start()
+            
+        elif cmd == '3':
             controller_600.stop()
             controller_391.stop()
+            controller_600_arm.stop()
+            controller_391_arm.stop()
             bus.shutdown()
             break
 
