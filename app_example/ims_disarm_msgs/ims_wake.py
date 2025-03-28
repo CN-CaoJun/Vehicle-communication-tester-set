@@ -104,17 +104,11 @@ def shell_control():
     )
 
     while True:
-        cmd = input("Enter command (1=start/2=stop/3=exit): ").strip().lower()
+        cmd = input("Enter command (1= Normal / 2= Polling /3=exit): ").strip().lower()
         if cmd == '1':
             print("Started CAN NM transmission")
             controller_600.start()
             controller_391.start()
-        # elif cmd == '2':
-        #     print("Stopped CAN NM transmission")
-        #     controller_600.stop()
-        #     controller_391.stop()
-        #     controller_600_arm.stop()
-        #     controller_391_arm.stop()
         elif cmd == '2':
             controller_600.stop()
             controller_391.stop()
