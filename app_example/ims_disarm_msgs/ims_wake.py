@@ -148,7 +148,30 @@ def shell_control():
             controller_600_arm.stop()
             controller_391_arm.stop()
             bus.shutdown()
-            break
 
+        elif cmd == '4':  # loop 1 and 2 to auto test
+            
+            controller_600.start()
+            controller_391.start()
+            controller_2EA.start()
+            
+            def transfer_to_arm():
+                controller_600.stop()
+                controller_391.stop()
+                controller_600_arm.start()
+                controller_391_arm.start()
+            threading.Timer(20.0, stop_transmission).start()
+            
+            def stop_transmission():
+                controller_600.stop()
+                controller_391.stop()
+                controller_600_arm.stop()
+                controller_391_arm.stop()
+                controller_2EA.stop()
+                # bus.shutdown()
+                print("Automatically stopped after 25 seconds")
+            threading.Timer(20.0, stop_transmission).start()
+            
+            
 if __name__ == "__main__":
     shell_control()

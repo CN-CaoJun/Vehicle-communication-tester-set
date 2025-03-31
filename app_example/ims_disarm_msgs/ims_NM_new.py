@@ -14,6 +14,10 @@ import threading
 import time
 from collections import defaultdict
 
+# 配置日志（可选，用于调试）
+# logging.basicConfig(level=logging.DEBUG)
+
+
 can.rc['interface'] = 'vector'
 can.rc['bustype'] = 'vector'
 can.rc['channel'] = '0'
@@ -38,7 +42,7 @@ class CANTaskManager:
     def periodic_send(self, can_id, interval, count=None):
         def wrapper():
             sent_count = 0
-            pattern_count = 0  # Counter for the second pattern in logic 2
+            task['pattern_count'] = 0  # Counter for the second pattern in logic 2
             while True:
                 with self.lock:
                     task = self.tasks[can_id]
@@ -48,13 +52,22 @@ class CANTaskManager:
                 try:
                     data = [0] * 8  # Default all zeros for 0x600
                     if can_id == 0x391:
-                        if sent_count < 10:
-                            data = [0x00, 0x00, 0x00, 0x00, 0x02, 0x04, 0x00, 0x00]  # First 10 frames
-                        elif pattern_count < 10:
-                            data = [0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00]  # Next 10 frames for logic 2
-                            pattern_count += 1
-                        else:
-                            data = [0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00]  # Remaining frames
+                        task_mode = task.get('mode', 1)
+                        
+                        if task_mode == 1:  # Logic 1
+                            if sent_count < 10:
+                                data = [0x00, 0x00, 0x00, 0x00, 0x02, 0x04, 0x00, 0x00]
+                            else:
+                                data = [0x00, 0x00, 0x00, 0x00, 0x02, 0x01, 0x00, 0x00]
+                        
+                        elif task_mode == 2:  # Logic 2
+                            if sent_count < 10:
+                                data = [0x00, 0x00, 0x00, 0x00, 0x02, 0x04, 0x00, 0x00]
+                            elif task['pattern_count'] < 10:
+                                data = [0x00, 0x00, 0x00, 0x00, 0x02, 0x02, 0x00, 0x00]
+                                task['pattern_count'] += 1
+                            else:
+                                data = [0x00, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00]
 
                     msg = can.Message(
                         arbitration_id=can_id,
@@ -77,15 +90,17 @@ class CANTaskManager:
 
         return wrapper
 
-    def add_task(self, can_id, interval, count=None):
+    def add_task(self, can_id, interval, count=None, mode=None):
         with self.lock:
             if can_id in self.tasks:
                 self.tasks[can_id]['active'] = True
                 self.tasks[can_id]['interval'] = interval
+                self.tasks[can_id]['mode'] = mode
             else:
                 self.tasks[can_id] = {
                     'active': True,
                     'interval': interval,
+                    'mode': mode,
                     'thread': threading.Thread(target=self.periodic_send(can_id, interval, count))
                 }
                 self.tasks[can_id]['thread'].start()
@@ -106,12 +121,12 @@ def input_handler(task_manager):
             # Wake-up mode: Send CAN messages to wake up the ECU
             # Logic 1: Send messages with IDs 0x600 and 0x391
             task_manager.add_task(0x600, 20, count=10)  # 0x600: First 10 frames at 20ms interval, then switch to 1000ms
-            task_manager.add_task(0x391, 20)  # 0x391: First 10 frames [00,02,00,00], then [00,01,00,00], maintain 20ms interval
+            task_manager.add_task(0x391, 20, mode=1)  # 0x391: First 10 frames [00,02,00,00], then [00,01,00,00], maintain 20ms interval
             print("Started logic 1: Sending 10 frames each for 0x600 and 0x391 with 20ms interval. 0x600 will switch to 1000ms interval after completion.")
         elif cmd == '2':
             # Logic 2: Build upon Logic 1 with additional timing and data pattern changes
             task_manager.add_task(0x600, 20, count=10)  # 0x600: First 10 frames at 20ms interval, then switch to 1000ms
-            task_manager.add_task(0x391, 20)  # Start with normal 0x391 transmission
+            task_manager.add_task(0x391, 20, mode=2)  # Start with logic 2 pattern transmission
             print("Started logic 2: Initial transmission started...")
             
             def delayed_actions():
@@ -121,7 +136,7 @@ def input_handler(task_manager):
                 with task_manager.lock:
                     if 0x391 in task_manager.tasks:
                         task_manager.stop_task(0x391)
-                        task_manager.add_task(0x391, 20)  # Restart with new pattern
+                        task_manager.add_task(0x391, 20, mode=2)  # Restart with new pattern for logic 2
                 
                 # Wait another 3 seconds before stopping 0x600
                 time.sleep(3)
