@@ -5,6 +5,7 @@ import time
 from collections import defaultdict
 
 import logging  # Import logging module
+import datetime  # Import datetime module for timestamping log files
 
 # Add a global counter variable
 case_counter = 0
@@ -65,41 +66,6 @@ class CANFrameController:
             self.frame_count = 0
 
 # Shell control interface
-"""
-Implements a command-line interface for controlling CAN (Controller Area Network) frame transmission.
-
-This function sets up multiple CANFrameController instances for different CAN IDs and provides
-a user interface to manage their operation. It allows switching between normal operation mode,
-polling mode, and includes an automated test mode.
-
-Local Variables:
-    bus (Bus): An instance of the CAN bus.
-    controller_600, controller_391, controller_2EA, controller_600_arm, controller_391_arm (CANFrameController):
-        Instances of CANFrameController for different CAN IDs and purposes.
-
-The function enters an infinite loop where it waits for user input to execute different commands:
-
-1. Normal Mode ('1'):
-   - Starts transmission for controllers 600, 391, and 2EA.
-
-2. Polling Mode ('2'):
-   - Stops normal transmission.
-   - Starts ARM (Auto-addressing Recognition Message) transmission for a short duration.
-
-3. Exit ('3'):
-   - Stops all controllers and shuts down the bus.
-
-4. Auto Test ('4'):
-   - Implements an automated test cycle alternating between normal and polling modes.
-
-Notes:
-- The function uses threading for timed operations and logging for the auto test mode.
-- It's designed to work with a specific CAN bus setup and predefined CAN IDs.
-- The function doesn't return any value; it runs until explicitly terminated.
-
-Raises:
-    May raise exceptions related to CAN bus operations or threading, which are not explicitly handled in this function.
-"""
 def shell_control():
     bus = Bus()
     
@@ -158,68 +124,88 @@ def shell_control():
         intervals=[20, 20]
     )
     
-    while True:
-        cmd = input("Enter command (1= Normal / 2= Polling /3=exit): ").strip().lower()
-        if cmd == '1':
-            print("Started CAN NM transmission")
-            controller_600.start()
-            controller_391.start()
-            controller_2EA.start()
-        elif cmd == '2':
-            controller_600.stop()
-            controller_2EA.stop()
-            controller_391.stop()
-            print("Send ARM Msgs to enter polling mode")
-            controller_2EA.start()
-            controller_600_arm.start()
-            controller_391_arm.start()
-            def stop_arm_controllers():
-                controller_600_arm.stop()
-                controller_391_arm.stop()
-                controller_2EA.stop()
-                # bus.shutdown()
-                print("Automatically stopped ARM messages after 5 seconds")
-            threading.Timer(5.0, stop_arm_controllers).start()
-            
-        elif cmd == '3':
-            controller_600.stop()
-            controller_391.stop()
-            controller_391_arm.stop()
-            controller_600_arm.stop()
-            controller_391_arm.stop()
-            bus.shutdown()
-
-        elif cmd == '4':  # loop 1 and 2 to auto test
-            # Configure logging
-            logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-
-            def run_case1():
-                global case_counter  # Declare the use of the global counter variable
-                case_counter += 1  # Increment the counter
-                logging.info(f"Running Preasure Test No.{case_counter}: Wakeup ATAC to normal mode")
+    def get_user_input():
+        while True:
+            cmd = input("Enter command (1= Normal / 2= Polling /3=exit): ").strip().lower()
+            if cmd == '1':
+                print("Started CAN NM transmission")
                 controller_600.start()
                 controller_391.start()
                 controller_2EA.start()
-                threading.Timer(5.0, run_case2).start()
-
-            def run_case2():
+            elif cmd == '2':
                 controller_600.stop()
-                controller_391.stop()
                 controller_2EA.stop()
-                logging.info("Set ATAC to polling mode")
+                controller_391.stop()
+                print("Send ARM Msgs to enter polling mode")
+                controller_2EA.start()
                 controller_600_arm.start()
                 controller_391_arm.start()
-                controller_2EA.start()
-                threading.Timer(5.0, stop_case2).start()  # Stop Case 2 after 5 seconds
-
-            def stop_case2():
-                logging.info("Stop NM Msgs and wait to enter polling mode")
+                def stop_arm_controllers():
+                    controller_600_arm.stop()
+                    controller_391_arm.stop()
+                    controller_2EA.stop()
+                    # bus.shutdown()
+                    print("Automatically stopped ARM messages after 5 seconds")
+                threading.Timer(5.0, stop_arm_controllers).start()
+                
+            elif cmd == '3':
+                controller_600.stop()
+                controller_391.stop()
+                controller_391_arm.stop()
                 controller_600_arm.stop()
                 controller_391_arm.stop()
-                controller_2EA.stop()
-                threading.Timer(45.0, run_case1).start()  # Restart Case 1 after 55 seconds
+                bus.shutdown()
+                break  # Exit the loop to stop the thread
+
+            elif cmd == '4':  # loop 1 and 2 to auto test
+                # Generate a timestamp for the log file name
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                log_filename = f"log_{timestamp}.txt"
                 
-            run_case1()
+                # Configure logging to write to a file and the console
+                logger = logging.getLogger()
+                logger.setLevel(logging.INFO)
+                formatter = logging.Formatter('%(asctime)s - %(message)s')
+
+                file_handler = logging.FileHandler(log_filename)
+                file_handler.setFormatter(formatter)
+                logger.addHandler(file_handler)
+
+                console_handler = logging.StreamHandler()
+                console_handler.setFormatter(formatter)
+                logger.addHandler(console_handler)
+
+                def run_case1():
+                    global case_counter  # Declare the use of the global counter variable
+                    case_counter += 1  # Increment the counter
+                    logging.info(f"Running Preasure Test No.{case_counter}: Wakeup ATAC to normal mode")
+                    controller_600.start()
+                    controller_391.start()
+                    controller_2EA.start()
+                    threading.Timer(5.0, run_case2).start()
+
+                def run_case2():
+                    controller_600.stop()
+                    controller_391.stop()
+                    controller_2EA.stop()
+                    logging.info("Set ATAC to polling mode")
+                    controller_600_arm.start()
+                    controller_391_arm.start()
+                    controller_2EA.start()
+                    threading.Timer(5.0, stop_case2).start()  # Stop Case 2 after 5 seconds
+
+                def stop_case2():
+                    logging.info("Stop NM Msgs and wait to enter polling mode")
+                    controller_600_arm.stop()
+                    controller_391_arm.stop()
+                    controller_2EA.stop()
+                    threading.Timer(45.0, run_case1).start()  # Restart Case 1 after 55 seconds
+
+                run_case1()
+
+    # Start the user input thread
+    input_thread = threading.Thread(target=get_user_input)
+    input_thread.start()
 
 if __name__ == "__main__":
     shell_control()
