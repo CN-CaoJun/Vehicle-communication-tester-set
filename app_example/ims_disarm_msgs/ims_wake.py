@@ -4,6 +4,11 @@ import threading
 import time
 from collections import defaultdict
 
+import logging  # Import logging module
+
+# Add a global counter variable
+case_counter = 0
+
 can.rc['interface'] = 'vector'
 can.rc['bustype'] = 'vector'
 can.rc['channel'] = '0'
@@ -60,6 +65,41 @@ class CANFrameController:
             self.frame_count = 0
 
 # Shell control interface
+"""
+Implements a command-line interface for controlling CAN (Controller Area Network) frame transmission.
+
+This function sets up multiple CANFrameController instances for different CAN IDs and provides
+a user interface to manage their operation. It allows switching between normal operation mode,
+polling mode, and includes an automated test mode.
+
+Local Variables:
+    bus (Bus): An instance of the CAN bus.
+    controller_600, controller_391, controller_2EA, controller_600_arm, controller_391_arm (CANFrameController):
+        Instances of CANFrameController for different CAN IDs and purposes.
+
+The function enters an infinite loop where it waits for user input to execute different commands:
+
+1. Normal Mode ('1'):
+   - Starts transmission for controllers 600, 391, and 2EA.
+
+2. Polling Mode ('2'):
+   - Stops normal transmission.
+   - Starts ARM (Auto-addressing Recognition Message) transmission for a short duration.
+
+3. Exit ('3'):
+   - Stops all controllers and shuts down the bus.
+
+4. Auto Test ('4'):
+   - Implements an automated test cycle alternating between normal and polling modes.
+
+Notes:
+- The function uses threading for timed operations and logging for the auto test mode.
+- It's designed to work with a specific CAN bus setup and predefined CAN IDs.
+- The function doesn't return any value; it runs until explicitly terminated.
+
+Raises:
+    May raise exceptions related to CAN bus operations or threading, which are not explicitly handled in this function.
+"""
 def shell_control():
     bus = Bus()
     
@@ -150,38 +190,36 @@ def shell_control():
             bus.shutdown()
 
         elif cmd == '4':  # loop 1 and 2 to auto test
-            import logging  # Import logging module
-
             # Configure logging
             logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 
             def run_case1():
-                logging.info("Starting Case 1")
+                global case_counter  # Declare the use of the global counter variable
+                case_counter += 1  # Increment the counter
+                logging.info(f"Running Preasure Test No.{case_counter}: Wakeup ATAC to normal mode")
                 controller_600.start()
                 controller_391.start()
                 controller_2EA.start()
                 threading.Timer(5.0, run_case2).start()
 
             def run_case2():
-                logging.info("Stopping Case 1")
                 controller_600.stop()
                 controller_391.stop()
                 controller_2EA.stop()
-                logging.info("Starting Case 2")
+                logging.info("Set ATAC to polling mode")
                 controller_600_arm.start()
                 controller_391_arm.start()
                 controller_2EA.start()
                 threading.Timer(5.0, stop_case2).start()  # Stop Case 2 after 5 seconds
 
             def stop_case2():
-                logging.info("Stopping Case 2")
+                logging.info("Stop NM Msgs and wait to enter polling mode")
                 controller_600_arm.stop()
                 controller_391_arm.stop()
                 controller_2EA.stop()
-                threading.Timer(55.0, run_case1).start()  # Restart Case 1 after 55 seconds
-
-            run_case1()  # Start with Case 1
-            # threading.Timer(65.0, stop_all).start()  # Stop after 65 seconds (5 + 60) - Removed this line
+                threading.Timer(45.0, run_case1).start()  # Restart Case 1 after 55 seconds
+                
+            run_case1()
 
 if __name__ == "__main__":
     shell_control()
