@@ -117,7 +117,7 @@ def shell_control():
         phase_change_count=10,
         intervals=[20, 20]
     )
-
+    
     while True:
         cmd = input("Enter command (1= Normal / 2= Polling /3=exit): ").strip().lower()
         if cmd == '1':
@@ -150,28 +150,38 @@ def shell_control():
             bus.shutdown()
 
         elif cmd == '4':  # loop 1 and 2 to auto test
-            
-            controller_600.start()
-            controller_391.start()
-            controller_2EA.start()
-            
-            def transfer_to_arm():
+            import logging  # Import logging module
+
+            # Configure logging
+            logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+
+            def run_case1():
+                logging.info("Starting Case 1")
+                controller_600.start()
+                controller_391.start()
+                controller_2EA.start()
+                threading.Timer(5.0, run_case2).start()
+
+            def run_case2():
+                logging.info("Stopping Case 1")
                 controller_600.stop()
                 controller_391.stop()
+                controller_2EA.stop()
+                logging.info("Starting Case 2")
                 controller_600_arm.start()
                 controller_391_arm.start()
-            threading.Timer(20.0, stop_transmission).start()
-            
-            def stop_transmission():
-                controller_600.stop()
-                controller_391.stop()
+                controller_2EA.start()
+                threading.Timer(5.0, stop_case2).start()  # Stop Case 2 after 5 seconds
+
+            def stop_case2():
+                logging.info("Stopping Case 2")
                 controller_600_arm.stop()
                 controller_391_arm.stop()
                 controller_2EA.stop()
-                # bus.shutdown()
-                print("Automatically stopped after 25 seconds")
-            threading.Timer(20.0, stop_transmission).start()
-            
-            
+                threading.Timer(55.0, run_case1).start()  # Restart Case 1 after 55 seconds
+
+            run_case1()  # Start with Case 1
+            # threading.Timer(65.0, stop_all).start()  # Stop after 65 seconds (5 + 60) - Removed this line
+
 if __name__ == "__main__":
     shell_control()
