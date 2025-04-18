@@ -1,5 +1,6 @@
 import tkinter
 from tkinter import ttk
+import can  # Importing python-can for CAN bus operations
 
 import sv_ttk
 
@@ -92,6 +93,23 @@ class InputsAndButtonsDemo(ttk.Frame):
 
         self.togglebutton = ttk.Checkbutton(self, text="Toggle me!", style="Toggle.TButton")
         self.togglebutton.grid(row=8, column=0, padx=5, pady=10, sticky="nsew")
+
+        self.scan_button = ttk.Button(self, text="Scan", command=self.scan_can_channels)
+        self.scan_button.grid(row=9, column=0, padx=5, pady=10, sticky="ew")
+
+    def scan_can_channels(self):
+        try:
+            # Use python-can to list available Vector CAN channels
+            interfaces = can.detect_available_configs()
+            vector_channels = [iface for iface in interfaces if iface['interface'] == 'vector']
+            if vector_channels:
+                print("Available Vector CAN Channels:")
+                for channel in vector_channels:
+                    print(f"Channel: {channel['channel']}, Serial: {channel.get('serial', 'N/A')}")
+            else:
+                print("No Vector CAN channels found.")
+        except Exception as e:
+            print(f"Error scanning CAN channels: {e}")
 
 
 class PanedDemo(ttk.PanedWindow):
@@ -189,24 +207,23 @@ class App(ttk.Frame):
             self.columnconfigure(index, weight=1)
             self.rowconfigure(index, weight=1)
 
-        # CheckBoxDemo(self).grid(row=0, column=0, padx=(0, 10), pady=(0, 20), sticky="nsew")
-        # RadioButtonDemo(self).grid(row=1, column=0, padx=(0, 10), sticky="nsew")
+        CheckBoxDemo(self).grid(row=0, column=0, padx=(0, 10), pady=(0, 20), sticky="nsew")
+        RadioButtonDemo(self).grid(row=1, column=0, padx=(0, 10), sticky="nsew")
         InputsAndButtonsDemo(self).grid(
             row=0, column=1, rowspan=2, padx=10, pady=(10, 0), sticky="nsew"
         )
-        # PanedDemo(self).grid(row=0, column=3, rowspan=2, padx=10, pady=(10, 0), sticky="nsew")
+        PanedDemo(self).grid(row=0, column=3, rowspan=2, padx=10, pady=(10, 0), sticky="nsew")
 
 
 def main():
     root = tkinter.Tk()
-    root.title("")
+    root.title("DoCAN Tester")
 
     sv_ttk.set_theme("light")
 
     App(root).pack(expand=True, fill="both")
 
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()
