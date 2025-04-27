@@ -10,6 +10,7 @@ import logging
 from config import Config
 import sys
 import binascii
+import struct
 
 isotp_params = {
     'stmin': 10,
@@ -29,16 +30,35 @@ isotp_params = {
     'blocking_send': False    
 }
 
+class FlexRawData(udsoncan.DidCodec):
+    def encode(self, val):
+        if not isinstance(val, (bytes, bytearray)):
+            raise ValueError("Input data must be bytes or bytearray type")
+        
+        if len(val) != 30:
+            raise ValueError('Data length must be 30 bytes')
+            
+        return val  # Return raw data directly
+        
+    def decode(self, payload):
+        if len(payload) != 30:
+            raise ValueError('Received data length must be 30 bytes')
+            
+        return payload  # Return raw data directly
+
+    def __len__(self):
+        return 30    # Fixed return 30 bytes length
+
 class CommonClient:
     def __init__(self, bus_type, node_name):
         """
-        初始化CommonClient
-        :param bus_type: CAN总线类型，支持'vector'和'pcan'
-        :param node_name: 节点名称，用于确定发送和接收ID
+        Initialize CommonClient
+        :param bus_type: CAN bus type, supports 'vector' and 'pcan'
+        :param node_name: Node name, used to determine send and receive ID
         """
         self.bus_type = bus_type
 
-        # 节点ID映射表
+        # Node ID mapping table
         self.node_id_map = {
             'IMS': {'RXID': 0x759, 'TXID': 0x749},
             'SMLS': {'RXID': 0x739, 'TXID': 0x731},
@@ -53,24 +73,24 @@ class CommonClient:
             'HCU': {'RXID': 0x7EF, 'TXID': 0x7E7},
         }
         
-        # 根据节点名称设置发送和接收ID
+        # Set send and receive ID based on node name
         if node_name in self.node_id_map:
             self.tx_id = self.node_id_map[node_name]['TXID']
             self.rx_id = self.node_id_map[node_name]['RXID']
-            print(f"已配置节点 {node_name}:")
+            print(f"Node {node_name} configured:")
             print(f"TXID: {self.tx_id:#04X}")
             print(f"RXID: {self.rx_id:#04X}")
         else:
-            raise ValueError(f"不支持的节点名称: {node_name}")
+            raise ValueError(f"Unsupported node name: {node_name}")
         
-        # 配置CAN总线参数
+        # Configure CAN bus parameters
         self._configure_can_rc()
         print(f"Bus type configured as: {can.rc['bustype']}")
-        # 初始化CAN总线
+        # Initialize CAN bus
         self.bus = Bus()
-        print("CAN总线已初始化")
+        print("CAN bus initialized")
         self.notifier = can.Notifier(self.bus, [])
-        # 初始化ISOTP层
+        # Initialize ISOTP layer
         self.tp_addr = isotp.Address(isotp.AddressingMode.Normal_11bits, 
                                    txid=self.tx_id, 
                                    rxid=self.rx_id)
@@ -92,6 +112,11 @@ class CommonClient:
             'ignore_all_zero_dtc': True,
             'dtc_snapshot_did_size': 2
         }
+        
+        self.uds_config['data_identifiers'] = {
+                'default': '>H',
+                0x7705: FlexRawData,
+            }
         self.conn = PythonIsoTpConnection(self.stack)
         self.uds_client = Client( self.conn, config=self.uds_config)
         
@@ -114,17 +139,17 @@ class CommonClient:
             can.rc['bitrate'] = 500000
         
         else:
-            raise ValueError(f"不支持的总线类型: {self.bus_type}")
+            raise ValueError(f"Unsupported bus type: {self.bus_type}")
             
     def start(self):
         """
-        启动所有服务
+        Start all services
         """
         self.uds_client.open()
         
     def stop(self):
         """
-        停止所有服务
+        Stop all services
         """
         self.uds_client.close()
         self.stack.stop()
@@ -132,72 +157,81 @@ class CommonClient:
         
     def get_client(self):
         """
-        获取UDS客户端实例
+        Get UDS client instance
         """
         return self.uds_client
 
 
 def main():
     """
-    主函数：处理用户输入并发送CAN诊断消息
+    Main function: Handle user input and send CAN diagnostic messages
     """
     try:
-        # 创建CommonClient实例
+        # Create CommonClient instance
         client = CommonClient('vector','IMS')
         client.start()
-        print("CAN诊断客户端已启动")
-        print("请输入命令：")
-        print("1 - 发送诊断请求")
-        print("2 - 发送自定义数据")
-        print("q - 退出程序")
+        print("CAN diagnostic client started")
+        print("Please input command:")
+        print("1 - Send diagnostic request")
+        print("2 - Send custom data")
+        print("q - Exit program")
 
         while True:
             cmd = input(">>> ").strip()
             
             if cmd.lower() == 'q':
-                print("正在退出程序...")
+                print("Exiting program...")
                 break
                 
             elif cmd == '1':
                 try:
-                    # 获取UDS客户端
+                    # Get UDS client
                     uds_client = client.get_client()
                     
-                    # 这里可以添加具体的诊断请求逻辑
-                    # 例如：读取数据标识符
-                    response = uds_client.read_data_by_identifier([0xF186])
-                    print(f"收到响应: {response}")
+                    # Add specific diagnostic request logic here
+                    # Example: Read data identifier
+                    response = uds_client.read_data_by_identifier([0x7705])
+                    # Extract response data
+                    if response.positive:
+                        data = response.service_data.values[0x7705]  # Use DID as key to get value
+                        # Convert bytes data to hex string
+                        hex_data = ' '.join([f'{b:02X}' for b in data])
+                        print(f"Hex data: {hex_data}")
+                        print(f"Raw data: {data}")  # Print raw bytes data
+
+                    else:
+                        print(f"Received negative response: {response.code}")
                     
                 except Exception as e:
-                    print(f"发送诊断请求失败: {str(e)}")
+                    print(f"Failed to send diagnostic request: {str(e)}")
             
             elif cmd == '2':
                 try:
-                    data_str = input("请输入要发送的数据(十六进制格式，如: 10 20 30): ").strip()
-                    # 将输入的十六进制字符串转换为字节数组
+                    data_str = input("Please input data (hex format, e.g.: 10 20 30): ").strip()
+                    # Convert hex string to bytes array
                     data_bytes = bytes.fromhex(data_str)
                     
-                    # 使用conn直接发送数据
+                    # Use conn to send data directly
                     client.conn.send(data_bytes)
-                    print(f"已发送数据: {' '.join([f'{b:02X}' for b in data_bytes])}")
+                    print(f"Data sent: {' '.join([f'{b:02X}' for b in data_bytes])}")
                     
-                    # 接收响应
+                    # Receive response
                     response = client.conn.wait_frame(timeout=2)
                     if response:
-                        print(f"收到响应: {' '.join([f'{b:02X}' for b in response])}")
+                        print(f"Response received: {' '.join([f'{b:02X}' for b in response])}")
                     else:
-                        print("未收到响应")
+                        print("No response received")
                         
                 except ValueError as e:
-                    print(f"数据格式错误: {str(e)}")
+                    print(f"Data format error: {str(e)}")
                 except Exception as e:
-                    print(f"发送数据失败: {str(e)}")
+                    print(f"Failed to send data: {str(e)}")
             
             else:
-                print("无效的命令，请重试")
+                print("Invalid command, please try again")
                 
     except Exception as e:
-        print(f"程序运行错误: {str(e)}")
+        print(f"Program runtime error: {str(e)}")
 
 if __name__ == "__main__":
     main()
