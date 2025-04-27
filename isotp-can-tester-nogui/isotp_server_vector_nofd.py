@@ -11,7 +11,7 @@ import json
 
 can.rc['interface'] = 'vector'
 can.rc['bustype'] = 'vector'
-can.rc['channel'] = '1'
+can.rc['channel'] = '0'
 can.rc['app_name'] = 'Python_ISOTP_Server'
  
 can.rc['fd'] = False  
@@ -54,6 +54,7 @@ isotp_params = {
     'blocking_send': False    
 }
 node_id_map = {
+    'IMS': {'RXID': 0x749, 'TXID': 0x759},
     'SMLS': {'RXID': 0x731, 'TXID': 0x739},
     'HCML': {'RXID': 0x740, 'TXID': 0x748},
     'HCMR': {'RXID': 0x741, 'TXID': 0x749},

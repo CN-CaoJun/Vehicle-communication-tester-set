@@ -6,6 +6,11 @@
         "resp_address": "0x7E9"
       },
       {
+        "node_id": "IMS",
+        "phyreq_address": "0x749",
+        "resp_address": "0x759"
+      },
+      {
         "node_id": "BMS",
         "phyreq_address": "0x700",
         "resp_address": "0x701"

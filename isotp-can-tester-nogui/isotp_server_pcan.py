@@ -10,7 +10,7 @@ import binascii
 import json
 
 try:
-    bus = can.interface.Bus(channel='PCAN_USBBUS2', bustype='pcan', bitrate=500000)
+    bus = can.interface.Bus(channel='PCAN_USBBUS1', bustype='pcan', bitrate=500000)
     notifier = can.Notifier(bus, [])
     print("PCAN bus initialized successfully.")
 except Exception as e:
@@ -55,7 +55,7 @@ with open('Node_Description.json', 'r') as file:
     data = json.load(file)
 
 # 定义要查找的node_id
-target_node_id = "VCU"  # 这里可以根据需要修改为其他node_id
+target_node_id = "IMS"  # 这里可以根据需要修改为其他node_id
 
 # 遍历CAN_Nodes数组，查找匹配的node_id
 for node in data['CAN_Nodes']:
