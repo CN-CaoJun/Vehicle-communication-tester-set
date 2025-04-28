@@ -37,7 +37,7 @@ isotp_params = {
 }
 
 logging.basicConfig(level=logging.DEBUG)
-tp_addr = isotp.Address(isotp.AddressingMode.Normal_11bits, txid=0x7E9, rxid=0x7E1)
+tp_addr = isotp.Address(isotp.AddressingMode.Normal_11bits, txid=0x759 , rxid=0x749)
 # tp_addr = isotp.Address(isotp.AddressingMode.Normal_11bits, txid=0x749, rxid=0x741)
 
 isotp_layer = isotp.NotifierBasedCanStack(

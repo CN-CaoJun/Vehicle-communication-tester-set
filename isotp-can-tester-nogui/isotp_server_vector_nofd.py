@@ -12,20 +12,12 @@ import json
 can.rc['interface'] = 'vector'
 can.rc['bustype'] = 'vector'
 can.rc['channel'] = '0'
-can.rc['app_name'] = 'Python_ISOTP_Server'
- 
+can.rc['app_name'] = 'Python_ISOTP_Client'
 can.rc['fd'] = False  
 can.rc['bitrate'] = 500000
-# can.rc['data_bitrate'] = 2000000
-
 can.rc['sjw_abr'] = 16
 can.rc['tseg1_abr'] = 63
 can.rc['tseg2_abr'] = 16
-
-# can.rc['sam_abr'] = 1
-# can.rc['sjw_dbr'] = 6
-# can.rc['tseg1_dbr'] = 13
-# can.rc['tseg2_dbr'] = 6
 
 
 try:
@@ -42,7 +34,7 @@ isotp_params = {
     'override_receiver_stmin': None,
     'wftmax': 4,
     'tx_data_length': 8,
-    # 'tx_data_min_length':8,
+    'tx_data_min_length':8,
     'tx_padding': 0x00,
     'rx_flowcontrol_timeout': 1000,
     'rx_consecutive_frame_timeout': 100,

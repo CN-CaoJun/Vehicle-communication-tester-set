@@ -37,6 +37,7 @@ isotp_params = {
 }
 # logging.basicConfig(level=logging.DEBUG)
 node_id_map = {
+    'IMS': {'RXID': 0x759, 'TXID': 0x749},
     'SMLS': {'RXID': 0x731, 'TXID': 0x739},
     'BMS': {'RXID': 0x7E2, 'TXID': 0x7EA},
     'PWR': {'RXID': 0x7E3, 'TXID': 0x7EB},
