@@ -205,7 +205,10 @@ class UDSResponder:
         :return: 响应数据
         """
         hex_req = payload.hex().upper()
-        print(f"[UDS] 接收请求: {hex_req}")
+        current_time = time.time()
+        milliseconds = int((current_time - int(current_time)) * 1000)
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time)) + f'.{milliseconds:03d}'
+        print(f"[UDS] [{timestamp}] 接收请求: {hex_req}")
         
         if len(payload) == 516 and payload[0] == 0x31:  # 检查第一个字节是否为0x36
             if payload[1] == 0x01: 
@@ -225,12 +228,18 @@ class UDSResponder:
         # 处理其他请求
         response_hex = self.cfg.find_case(hex_req)
         if response_hex:
-            print(f"[UDS] 发送响应: {response_hex}")
+            current_time = time.time()
+            milliseconds = int((current_time - int(current_time)) * 1000)
+            timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time)) + f'.{milliseconds:03d}'
+            print(f"[UDS] [{timestamp}] 发送响应: {response_hex}")
             return bytes.fromhex(response_hex)
 
         # 如果没有找到匹配的响应，返回否定响应
         nrc_response = self._create_negative_response(payload[0], 0x11)
-        print(f"[UDS] 发送否定响应: {nrc_response.hex().upper()}")
+        current_time = time.time()
+        milliseconds = int((current_time - int(current_time)) * 1000)
+        timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time)) + f'.{milliseconds:03d}'
+        print(f"[UDS] [{timestamp}] 发送否定响应: {nrc_response.hex().upper()}")
         return nrc_response
 
     def _create_negative_response(self, sid, nrc):
